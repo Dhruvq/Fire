@@ -40,13 +40,36 @@ The Wildfire Spread Forecaster predicts where an active wildfire will spread in 
 *   **Frontend / User Interface:** Next.js / React with Mapbox GL JS for 3D terrain rendering.
 *   **Host / Deployment:** AWS Free Tier (AWS Lambda Serverless + API Gateway + S3 for Raster Data).
 
+## Phase 3: Frontend & Visualization
+**Goal:** Build the Next.js frontend to visualize active wildfires in Southern California and provide an interactive UI for spread predictions.
+
+*   **Setup:** Scaffolded a Next.js web application using Tailwind CSS for styling. Configured Next.js rewrites to proxy `/api/*` requests seamlessly to the FastAPI backend running locally without CORS issues.
+*   **Pivot - Maps Architecture:**
+    *   *Initial Plan:* Use Mapbox GL JS (`mapbox-gl`, `react-map-gl`) which requires an API token.
+    *   *The Problem:* Next.js 15+ / Turbopack persistently failed to resolve `react-map-gl` dependencies and resulted in build errors.
+    *   *Solution / Pivot:* We migrated entirely to the open-source **Maplibre GL JS** (`maplibre-gl`, `react-map-gl/maplibre`). This change successfully resolved the build failures while also removing the strict requirement for a Mapbox token. The base map uses the open-source CARTO Dark Matter styles with Maplibre Terrain DEM.
+*   **User Interface:**
+    *   Built `FireMap.tsx` as the core interactive map centered on Southern California, overlaying active fire data and prediction footprints.
+    *   Built `Sidebar.tsx` as a floating panel to select simulation parameters.
+*   **Pivot - Reduced Simulation Load:** We initially planned to allow users to simulate up to 24 hours of fire spread. To reduce extreme server loads from the recursive Cellular Automata algorithm during verification, we capped the peak simulation timeframe at 8 hours.
+*   **Visual Enhancements:** Increased the Maplibre 3D terrain exaggeration multiplier to 2.5x to highlight topological relief in Southern California.
+
+---
+*End of Phase 3.*
+
+## Phase 3.5: Local Validation & Mocking
+**Goal:** Validate the end-to-end integration and run local spread simulations before cloud deployment.
+
+*   **Mock Data Injection:** Because NASA FIRMS wasn't returning any natural active fire clusters in Southern California over the last 24H, we temporarily modified the `get_active_fires()` logic in `app.py` to inject a 3-point `Mock Fire Cluster` located in the Angeles National Forest when the live FIRMS data is completely empty.
+    *   *Code Review Fix:* To prevent this mock data from leaking into the production environment if the FIRMS API key fails or errors out, this injection logic was securely gated behind an explicit `USE_MOCK_FIRES="true"` environment variable payload.
+*   **Validation Success:** Ran the frontend and successfully triggered the Cellular Automata spread model on the mocked data. The simulation correctly aggregated live NOAA HRRR wind and USGS elevation data, simulated the spread, and returned the generated footprint polygon to the UI.
+*   **Logic Tweak:** Synced the backend FastAPI validation limit (`le=8`) with the frontend UI slider to ensure user-input simulation hours strictly cap at 8h to prevent unexpected recursive load spikes during prediction processing.
+
+---
+*End of Phase 3.5.*
+
 ## Future Phases Planned
 
-**Phase 3: Frontend & Visualization**
-*   Scaffold the Next.js web application.
-*   Integrate Mapbox GL JS to plot active fires.
-*   Build interactive UI to trigger and display the spread prediction.
-
 **Phase 4: Cloud Infrastructure & Deployment**
-*   Deploy Backend to AWS Lambda.
-*   Deploy Next.js frontend to AWS (e.g., AWS Amplify or S3/CloudFront).
+*   Deploy Backend to AWS Lambda or similar serverless architecture.
+*   Deploy Next.js frontend to AWS (e.g., AWS Amplify or S3/CloudFront) or Vercel.
