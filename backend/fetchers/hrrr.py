@@ -1,45 +1,50 @@
 import os
-import requests
-import datetime
+import httpx
+import logging
 from dotenv import load_dotenv
 
 load_dotenv()
 
-def fetch_hrrr_forecast(lat, lon):
+logger = logging.getLogger(__name__)
+
+async def fetch_hrrr_forecast(lat, lon):
     """
     Fetch NOAA HRRR weather forecast for a specific location.
-    Using National Weather Service API (api.weather.gov) as it provides access to HRRR models.
     """
-    # 1. Get grid coordinates for the given lat/lon
     points_url = f"https://api.weather.gov/points/{lat},{lon}"
     headers = {
         "User-Agent": "WildfireSpreadForecaster/1.0 (contact: info@example.com)",
         "Accept": "application/geo+json"
     }
     
-    response = requests.get(points_url, headers=headers)
-    
-    if response.status_code != 200:
-        print(f"Failed to get grid points: {response.text}")
-        return None
-        
-    data = response.json()
-    forecast_url = data['properties']['forecastHourly']
-    
-    # 2. Get hourly forecast
-    forecast_response = requests.get(forecast_url, headers=headers)
-    if forecast_response.status_code == 200:
-        return forecast_response.json()
-    else:
-        print(f"Failed to fetch forecast: {forecast_response.text}")
-        return None
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        try:
+            response = await client.get(points_url, headers=headers)
+            response.raise_for_status()
+            data = response.json()
+            forecast_url = data['properties']['forecastHourly']
+            
+            # Get hourly forecast
+            forecast_response = await client.get(forecast_url, headers=headers)
+            forecast_response.raise_for_status()
+            return forecast_response.json()
+        except httpx.HTTPError as e:
+            logger.error(f"Error fetching HRRR forecast: {e}")
+            return None
+        except Exception as e:
+            logger.error(f"Unexpected error parsing HRRR forecast: {e}")
+            return None
+
 
 if __name__ == "__main__":
-    # Test for a location in SoCal (e.g., Mount Wilson)
-    lat, lon = 34.2238, -118.0601
-    forecast = fetch_hrrr_forecast(lat, lon)
-    if forecast:
-        periods = forecast.get('properties', {}).get('periods', [])
-        print(f"Found {len(periods)} hourly forecast periods.")
-        if periods:
-            print("Next hour forecast:", periods[0])
+    import asyncio
+    async def main():
+        logging.basicConfig(level=logging.INFO)
+        lat, lon = 34.2238, -118.0601
+        forecast = await fetch_hrrr_forecast(lat, lon)
+        if forecast:
+            periods = forecast.get('properties', {}).get('periods', [])
+            print(f"Found {len(periods)} hourly forecast periods.")
+            if periods:
+                print("Next hour forecast:", periods[0])
+    asyncio.run(main())
