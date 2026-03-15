@@ -10,6 +10,7 @@ export interface FirePoint {
   lat: number;
   lon: number;
   frp?: number; // Fire Radiative Power (intensity roughly)
+  is_mock?: boolean; // Flag to indicate if the fire is a mock/test fire
 }
 
 export interface PredictionResult {
@@ -41,7 +42,7 @@ export default function FireMap({ activeFires, prediction, onFireSelect, selecte
       type: 'FeatureCollection' as const,
       features: activeFires.map((fire, i) => ({
         type: 'Feature' as const,
-        properties: { id: i, frp: fire.frp || 10 },
+        properties: { id: i, frp: fire.frp || 10, is_mock: fire.is_mock || false },
         geometry: { type: 'Point' as const, coordinates: [fire.lon, fire.lat] }
       }))
     };
@@ -113,6 +114,28 @@ export default function FireMap({ activeFires, prediction, onFireSelect, selecte
     }
   };
 
+  // Labeling for Test Fires
+  const testFireLabelLayer: any = { // Using any as SymbolLayerSpecification can be tricky with types
+    id: 'test-fire-label',
+    type: 'symbol',
+    source: 'fires',
+    filter: ['==', ['get', 'is_mock'], true],
+    layout: {
+      'text-field': 'TEST FIRE',
+      'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
+      'text-size': ['interpolate', ['linear'], ['zoom'], 8, 12, 15, 20],
+      'text-anchor': 'bottom',
+      'text-offset': [0, -1.5],
+      'text-allow-overlap': true,
+      'text-ignore-placement': true,
+    },
+    paint: {
+      'text-color': '#ffffff',
+      'text-halo-color': '#ff0000',
+      'text-halo-width': 2,
+    }
+  };
+
   const onMapClick = useCallback(
     (event: MapMouseEvent) => {
       // Find features that were clicked
@@ -155,6 +178,7 @@ export default function FireMap({ activeFires, prediction, onFireSelect, selecte
         <Source id="fires" type="geojson" data={firesGeoJSON}>
            <Layer {...heatmapLayer} />
            <Layer {...circleLayer} />
+           <Layer {...testFireLabelLayer} />
         </Source>
 
         {/* Render Predicting Spread Footprint */}

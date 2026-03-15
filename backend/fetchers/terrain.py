@@ -35,10 +35,10 @@ async def fetch_elevation_data(lat, lon, client=None):
             return float(elevation)
         return None
     except httpx.HTTPError as e:
-        logger.error(f"HTTP error fetching elevation at ({lat}, {lon}): {e}")
+        logger.warning(f"HTTP error fetching elevation at ({lat}, {lon}): {e}")
         return None
     except Exception as e:
-        logger.error(f"Error fetching elevation at ({lat}, {lon}): {e}")
+        logger.warning(f"Error fetching elevation at ({lat}, {lon}): {e}")
         return None
 
 if __name__ == "__main__":

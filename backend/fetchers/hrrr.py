@@ -17,7 +17,7 @@ async def fetch_hrrr_forecast(lat, lon):
         "Accept": "application/geo+json"
     }
     
-    async with httpx.AsyncClient(timeout=10.0) as client:
+    async with httpx.AsyncClient(timeout=10.0, follow_redirects=True) as client:
         try:
             response = await client.get(points_url, headers=headers)
             response.raise_for_status()

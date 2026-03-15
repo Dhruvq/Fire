@@ -62,17 +62,17 @@ async def get_active_fires():
                     })
                     
         # --- MOCK DATA INJECTION FOR LOCAL VALIDATION ---
-        # If FIRMS returns no active fires, we inject a mock cluster in the Angeles National Forest
-        # so the Cellular Automata spread prediction can be locally tested.
+        # If USE_MOCK_FIRES is true, we inject a mock cluster in the Angeles National Forest
+        # so the Cellular Automata spread prediction can be locally tested and labeled.
         # This is strictly gated behind an environment variable to prevent polluting production.
         use_mock = os.getenv("USE_MOCK_FIRES", "false").lower() == "true"
         if len(fires) == 0 and use_mock:
             logger.info("FIRMS returned 0 active fires. Injecting Mock Fire Cluster as USE_MOCK_FIRES is true.")
-            fires = [
-                {"lat": 34.2238, "lon": -118.0601, "frp": 150.0},
-                {"lat": 34.2250, "lon": -118.0610, "frp": 120.0},
-                {"lat": 34.2220, "lon": -118.0580, "frp": 90.0}
-            ]
+            fires.extend([
+                {"lat": 34.2238, "lon": -118.0601, "frp": 150.0, "is_mock": True},
+                {"lat": 34.2250, "lon": -118.0610, "frp": 120.0, "is_mock": True},
+                {"lat": 34.2220, "lon": -118.0580, "frp": 90.0, "is_mock": True}
+            ])
         # ------------------------------------------------
 
         return {"status": "success", "count": len(fires), "fires": fires}

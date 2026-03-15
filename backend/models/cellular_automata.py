@@ -48,22 +48,35 @@ class ElevationCache:
         self.cache = {}
         self.client = client
         self.locks = {}
-        
+        self._semaphore = asyncio.Semaphore(20)  # Max 20 concurrent USGS requests
+
     async def get(self, lat, lon):
         key = (round(lat, 4), round(lon, 4))
         if key in self.cache:
             return self.cache[key]
-            
+
         if key not in self.locks:
             self.locks[key] = asyncio.Lock()
-            
+
         async with self.locks[key]:
             if key in self.cache:
                 return self.cache[key]
-            
-            elev = await fetch_elevation_data(lat, lon, self.client)
+
+            async with self._semaphore:
+                elev = await fetch_elevation_data(lat, lon, self.client)
             self.cache[key] = elev
             return elev
+
+    async def prefetch_grid(self, center_lat, center_lon, radius, deg_lat, deg_lon):
+        """Pre-fetch a square grid of elevations around the fire origin."""
+        tasks = []
+        for di in range(-radius, radius + 1):
+            for dj in range(-radius, radius + 1):
+                tasks.append(self.get(
+                    center_lat + di * deg_lat,
+                    center_lon + dj * deg_lon
+                ))
+        await asyncio.gather(*tasks)
 
 async def predict_spread(start_lat, start_lon, hours=6):
     """
@@ -72,7 +85,7 @@ async def predict_spread(start_lat, start_lon, hours=6):
     """
     # Use a custom connection pool limit so we don't overwhelm the USGS API
     limits = httpx.Limits(max_keepalive_connections=20, max_connections=50)
-    async with httpx.AsyncClient(timeout=10.0, limits=limits) as client:
+    async with httpx.AsyncClient(timeout=3.0, limits=limits) as client:
         elevation_cache = ElevationCache(client)
         forecast = await fetch_hrrr_forecast(start_lat, start_lon)
         
@@ -98,7 +111,7 @@ async def predict_spread(start_lat, start_lon, hours=6):
                 
         deg_lat = CELL_SIZE_M * DEG_LAT_PER_M
         deg_lon = CELL_SIZE_M * _get_deg_lon_per_m(start_lat)
-        
+
         burning_cells = set([(0, 0)])
         heat_grid = {(0, 0): 100.0} # 100 = burning
         
