@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useCallback, useMemo } from 'react';
-import Map, { Source, Layer, NavigationControl, Marker, Popup, MapMouseEvent } from 'react-map-gl/maplibre';
-import type { HeatmapLayerSpecification, CircleLayerSpecification, FillLayerSpecification } from 'maplibre-gl';
+import Map, { Source, Layer, NavigationControl, Marker, MapMouseEvent } from 'react-map-gl/maplibre';
+import type { HeatmapLayerSpecification, CircleLayerSpecification } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
 // Type definitions matching our backend responses
@@ -165,6 +165,7 @@ export default function FireMap({ activeFires, prediction, onFireSelect, selecte
         onClick={onMapClick}
         interactiveLayerIds={['fires-point']}
         cursor={selectedFire ? 'crosshair' : 'pointer'}
+        maxZoom={14}
       >
         <Source
           id="terrain-dem"
