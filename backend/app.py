@@ -2,10 +2,11 @@ import os
 import logging
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
+from httpx import HTTPStatusError, RequestError # Import specific httpx exceptions
 from dotenv import load_dotenv
 
 from models.cellular_automata import predict_spread
-from fetchers.firms import fetch_active_fires
+from fetchers.firms import fetch_active_fires, SOCAL_BBOX
 
 load_dotenv()
 
@@ -13,11 +14,15 @@ load_dotenv()
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Parse the SOCAL_BBOX string once
+_bbox_parts = [float(x) for x in SOCAL_BBOX.split(',')]
+SOCAL_MIN_LON, SOCAL_MIN_LAT, SOCAL_MAX_LON, SOCAL_MAX_LAT = _bbox_parts
+
 app = FastAPI(title="Wildfire Spread Forecaster API")
 
 class PredictRequest(BaseModel):
-    lat: float = Field(..., description="Latitude of the fire origin", json_schema_extra={"example": 34.2238})
-    lon: float = Field(..., description="Longitude of the fire origin", json_schema_extra={"example": -118.0601})
+    lat: float = Field(..., description="Latitude of the fire origin", ge=SOCAL_MIN_LAT, le=SOCAL_MAX_LAT, json_schema_extra={"example": 34.2238})
+    lon: float = Field(..., description="Longitude of the fire origin", ge=SOCAL_MIN_LON, le=SOCAL_MAX_LON, json_schema_extra={"example": -118.0601})
     hours: int = Field(6, description="Hours to simulate", ge=1, le=8)
 
 
@@ -76,9 +81,15 @@ async def get_active_fires():
         # ------------------------------------------------
 
         return {"status": "success", "count": len(fires), "fires": fires}
+    except (HTTPStatusError, RequestError) as e:
+        logger.error(f"HTTP Error fetching active fires: {e}")
+        raise HTTPException(status_code=502, detail=f"Could not connect to FIRMS API: {e}")
+    except ValueError as e:
+        logger.error(f"Data parsing error in get_active_fires: {e}")
+        raise HTTPException(status_code=500, detail=f"Error parsing FIRMS data: {e}")
     except Exception as e:
-        logger.error(f"Error in get_active_fires: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Unexpected error in get_active_fires: {e}")
+        raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {e}")
 
 
 @app.post("/predict")
@@ -94,7 +105,13 @@ async def predict_fire_spread(request: PredictRequest):
             "origin": {"lat": request.lat, "lon": request.lon},
             "predicted_footprint": simulated_cells
         }
+    except (HTTPStatusError, RequestError) as e:
+        logger.error(f"HTTP Error during fire spread prediction: {e}")
+        raise HTTPException(status_code=502, detail=f"Could not fetch external data for prediction: {e}")
+    except ValueError as e:
+        logger.error(f"Prediction input or logic error: {e}")
+        raise HTTPException(status_code=400, detail=f"Invalid prediction parameters or data: {e}")
     except Exception as e:
-        logger.error(f"Error in predict_fire_spread: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Unexpected error in predict_fire_spread: {e}")
+        raise HTTPException(status_code=500, detail=f"An unexpected error occurred during prediction: {e}")
 

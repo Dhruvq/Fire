@@ -2,13 +2,20 @@ import math
 import asyncio
 import httpx
 import logging
+import os
+from dotenv import load_dotenv
+
 from fetchers.hrrr import fetch_hrrr_forecast
 from fetchers.terrain import fetch_elevation_data
+
+load_dotenv()
 
 logger = logging.getLogger(__name__)
 
 # Constants
-CELL_SIZE_M = 100.0  # meters
+CELL_SIZE_M = float(os.getenv("FIRE_CELL_SIZE_M", "100.0"))  # meters
+BASE_SPREAD_AMOUNT = float(os.getenv("FIRE_BASE_SPREAD_AMOUNT", "30.0"))
+SLOPE_FACTOR_MULTIPLIER = float(os.getenv("FIRE_SLOPE_FACTOR_MULTIPLIER", "5.0"))
 DEG_LAT_PER_M = 1.0 / 111000.0
 
 def _get_deg_lon_per_m(lat):
@@ -40,7 +47,7 @@ def get_slope_factor(elev_from, elev_to, distance_m):
         return 1.0
     slope = (elev_to - elev_from) / distance_m
     # Fire spreads faster uphill.
-    factor = 1.0 + (slope * 5.0)
+    factor = 1.0 + (slope * SLOPE_FACTOR_MULTIPLIER)
     return max(0.1, factor)
 
 class ElevationCache:
@@ -163,7 +170,7 @@ async def predict_spread(start_lat, start_lon, hours=6):
                     s_factor = get_slope_factor(elev_from, elev_to, dist_m)
                     
                     # Base spread per hour = 30 heat points
-                    spread_amount = 30.0 * w_factor * s_factor
+                    spread_amount = BASE_SPREAD_AMOUNT * w_factor * s_factor
                     
                     current_heat = heat_grid.get((n_lat_idx, n_lon_idx), 0.0)
                     new_heat = current_heat + spread_amount

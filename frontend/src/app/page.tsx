@@ -10,6 +10,7 @@ export default function Home() {
   
   const [prediction, setPrediction] = useState<PredictionResult | null>(null);
   const [isPredicting, setIsPredicting] = useState<boolean>(false);
+  const [predictionError, setPredictionError] = useState<string | null>(null);
 
   // Initial load of active fires
   useEffect(() => {
@@ -33,6 +34,7 @@ export default function Home() {
     
     setIsPredicting(true);
     setPrediction(null); // Clear previous
+    setPredictionError(null); // Clear previous error
     
     try {
       const res = await fetch('/api/predict', {
@@ -46,14 +48,15 @@ export default function Home() {
       });
       
       if (!res.ok) {
-        throw new Error('Prediction API failed');
+        const errorData = await res.json();
+        throw new Error(errorData.detail || 'Prediction API failed');
       }
       
       const data = await res.json();
       setPrediction(data);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error running prediction:", err);
-      alert("Failed to run simulation. Check console for details.");
+      setPredictionError(err.message || "An unknown error occurred during prediction.");
     } finally {
       setIsPredicting(false);
     }
@@ -84,6 +87,7 @@ export default function Home() {
         prediction={prediction}
         isPredicting={isPredicting}
         onPredict={handlePredictSpread}
+        predictionError={predictionError}
       />
     </main>
   );

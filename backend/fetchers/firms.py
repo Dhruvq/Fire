@@ -9,8 +9,10 @@ logger = logging.getLogger(__name__)
 
 # NASA FIRMS API Base URL
 # Read documentation at https://firms.modaps.eosdis.nasa.gov/api/
-FIRMS_API_KEY = os.getenv("FIRMS_API_KEY", "")
-MAP_KEY = FIRMS_API_KEY if FIRMS_API_KEY else "DEMO_KEY"
+FIRMS_API_KEY = os.getenv("FIRMS_API_KEY")
+if not FIRMS_API_KEY:
+    raise ValueError("FIRMS_API_KEY environment variable not set.")
+MAP_KEY = FIRMS_API_KEY
 
 # Southern California bounding box
 # [West, South, East, North]

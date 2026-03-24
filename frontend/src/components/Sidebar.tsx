@@ -9,9 +9,10 @@ interface SidebarProps {
   prediction: PredictionResult | null;
   isPredicting: boolean;
   onPredict: (hours: number) => void;
+  predictionError: string | null; // Added for displaying backend errors
 }
 
-export default function Sidebar({ selectedFire, prediction, isPredicting, onPredict }: SidebarProps) {
+export default function Sidebar({ selectedFire, prediction, isPredicting, onPredict, predictionError }: SidebarProps) {
   const [hours, setHours] = useState<number>(6);
 
   return (
@@ -79,11 +80,18 @@ export default function Sidebar({ selectedFire, prediction, isPredicting, onPred
                 <Play className="w-4 h-4" fill="currentColor" />
                 Run Prediction Model
               </>
-            )}
-          </button>
-        </div>
+          )}
+        </button>
+        {predictionError && (
+          <div className="mt-4 p-3 bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-300 rounded-lg text-sm flex gap-2 items-start">
+            <Info className="w-5 h-5 shrink-0 mt-0.5" />
+            <p className="font-semibold">Error: {predictionError}</p>
+          </div>
+        )}
 
-        {/* Output Stats */}
+      </div>
+
+      {/* Output Stats */}
         {prediction && !isPredicting && (
           <div className="mt-2 text-sm border-t border-zinc-200 dark:border-zinc-800 pt-4">
             <p className="font-semibold text-zinc-900 dark:text-zinc-100">Simulation Complete</p>
