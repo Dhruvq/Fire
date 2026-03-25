@@ -1,6 +1,6 @@
 # Wildfire Spread Forecaster
 
-The **Wildfire Spread Forecaster** predicts where an active wildfire will spread over the next 6–24 hours based on its current location, size, shape, near real-time satellite data, weather forecasts, and terrain/vegetation conditions. Focused initially on Southern California, this application combines real-time data ingestion with an empirically-driven modeling engine to provide vital predictive insights on an interactive 3D map.
+The **Wildfire Spread Forecaster** predicts where an active wildfire will spread over the next 1-8 hours based on its current location, size, shape, near real-time satellite data, weather forecasts, and terrain/vegetation conditions. Focused initially on Southern California, this application combines real-time data ingestion with an empirically-driven modeling engine to provide vital predictive insights on an interactive 3D map.
 
 ## App Screenshots
 
