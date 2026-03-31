@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AI Wildfire Predictor",
-  description: "Real-time AI Wildfire Spread Detection",
+  title: "Wildfire Predictor",
+  description: "Real-time Wildfire Spread Detection",
 };
 
 export default function RootLayout({

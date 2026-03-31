@@ -80,6 +80,7 @@ export default function Home() {
         prediction={prediction} 
         onFireSelect={handleFireSelect}
         selectedFire={selectedFire}
+        isPredicting={isPredicting}
       />
       
       <Sidebar 

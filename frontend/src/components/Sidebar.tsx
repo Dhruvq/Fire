@@ -16,15 +16,15 @@ export default function Sidebar({ selectedFire, prediction, isPredicting, onPred
   const [hours, setHours] = useState<number>(6);
 
   return (
-    <div className="absolute top-4 left-4 w-80 bg-[#1e1e1e]/85 backdrop-blur-md rounded-xl shadow-lg overflow-hidden flex flex-col pointer-events-auto border border-white/10 transition-all duration-300">
+    <div className="absolute bottom-0 left-0 w-full md:bottom-auto md:w-80 md:top-4 md:left-4 bg-[#1e1e1e]/85 backdrop-blur-md rounded-t-2xl md:rounded-xl shadow-[0_-10px_40px_rgba(0,0,0,0.5)] md:shadow-lg overflow-hidden flex flex-col pointer-events-auto border-t md:border border-white/10 transition-all duration-300 z-50">
       
       {/* Header */}
       <div className="bg-black/40 p-5 border-b border-white/5">
-        <h1 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">AI Wildfire Predictor</h1>
+        <h1 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">Wildfire Predictor</h1>
         <p className="text-sm text-zinc-400 mt-1">Southern California</p>
       </div>
 
-      <div className="p-5 flex flex-col gap-4">
+      <div className="p-5 flex flex-col gap-4 overflow-y-auto max-h-[45vh] md:max-h-[calc(100vh-8rem)] custom-scrollbar">
         
         {/* Instructions / Selection State */}
         {!selectedFire ? (

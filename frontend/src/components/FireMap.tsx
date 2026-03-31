@@ -25,13 +25,14 @@ interface FireMapProps {
   prediction: PredictionResult | null;
   onFireSelect: (fire: FirePoint | null) => void;
   selectedFire: FirePoint | null;
+  isPredicting: boolean;
 }
 
-export default function FireMap({ activeFires, prediction, onFireSelect, selectedFire }: FireMapProps) {
+export default function FireMap({ activeFires, prediction, onFireSelect, selectedFire, isPredicting }: FireMapProps) {
   const [viewState, setViewState] = useState({
     longitude: -118.2437, // Centered roughly on Los Angeles/SoCal
     latitude: 34.0522,
-    zoom: 8,
+    zoom: 7.25,
     pitch: 45, // Angled for 3D terrain
     bearing: 0
   });
@@ -43,20 +44,27 @@ export default function FireMap({ activeFires, prediction, onFireSelect, selecte
     if (prediction && prediction.predicted_footprint.length > 0 && mapRef.current) {
       const lats = prediction.predicted_footprint.map(p => p.lat);
       const lons = prediction.predicted_footprint.map(p => p.lon);
-      
+
       const minLat = Math.min(...lats);
       const maxLat = Math.max(...lats);
       const minLon = Math.min(...lons);
       const maxLon = Math.max(...lons);
-      
+
       // fitBounds automatically calculates the best zoom level to fit the box
-      // We add padding-left: 350px to ensure the fire isn't hidden behind our Sidebar
+      // We add dynamic padding to ensure the fire isn't hidden behind our Sidebar (left on desktop, bottom on mobile)
+      const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+
       mapRef.current.fitBounds(
         [[minLon, minLat], [maxLon, maxLat]],
-        { 
-          padding: { top: 50, bottom: 50, right: 50, left: 100 },
+        {
+          padding: {
+            top: 50,
+            bottom: isMobile ? 400 : 50,
+            right: 50,
+            left: isMobile ? 50 : 100
+          },
           maxZoom: 14,
-          duration: 1500 
+          duration: 1500
         }
       );
     }
@@ -77,7 +85,7 @@ export default function FireMap({ activeFires, prediction, onFireSelect, selecte
   // Convert prediction footprint into a GeoJSON multipoint/polygon representation
   const predictionGeoJSON = useMemo(() => {
     if (!prediction || !prediction.predicted_footprint.length) return null;
-    
+
     return {
       type: 'FeatureCollection' as const,
       features: prediction.predicted_footprint.map((p, i) => ({
@@ -117,9 +125,8 @@ export default function FireMap({ activeFires, prediction, onFireSelect, selecte
     id: 'fires-point',
     type: 'circle',
     source: 'fires',
-    minzoom: 8,
     paint: {
-      'circle-radius': ['interpolate', ['linear'], ['zoom'], 8, 3, 15, 8],
+      'circle-radius': ['interpolate', ['linear'], ['zoom'], 0, 2, 8, 3, 15, 8],
       'circle-color': '#ff4444',
       'circle-stroke-color': '#ffffff',
       'circle-stroke-width': 1,
@@ -133,7 +140,7 @@ export default function FireMap({ activeFires, prediction, onFireSelect, selecte
     type: 'circle',
     source: 'prediction',
     paint: {
-      'circle-radius': ['interpolate', ['linear'], ['zoom'], 8, 4, 15, 12],
+      'circle-radius': ['interpolate', ['linear'], ['zoom'], 0, 2, 8, 4, 15, 12],
       'circle-color': '#ff9900', // Orange for predicted spread
       'circle-opacity': 0.6,
       'circle-stroke-width': 0
@@ -149,7 +156,7 @@ export default function FireMap({ activeFires, prediction, onFireSelect, selecte
     layout: {
       'text-field': 'TEST FIRE',
       'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
-      'text-size': ['interpolate', ['linear'], ['zoom'], 8, 12, 15, 20],
+      'text-size': ['interpolate', ['linear'], ['zoom'], 0, 8, 8, 12, 15, 20],
       'text-anchor': 'bottom',
       'text-offset': [0, -1.5],
       'text-allow-overlap': true,
@@ -201,12 +208,12 @@ export default function FireMap({ activeFires, prediction, onFireSelect, selecte
           tileSize={256}
           maxzoom={14}
         />
-        
+
         {/* Render Active Fires */}
         <Source id="fires" type="geojson" data={firesGeoJSON}>
-           <Layer {...heatmapLayer} />
-           <Layer {...circleLayer} />
-           <Layer {...testFireLabelLayer} />
+          <Layer {...heatmapLayer} />
+          <Layer {...circleLayer} />
+          <Layer {...testFireLabelLayer} />
         </Source>
 
         {/* Render Predicting Spread Footprint */}
@@ -217,12 +224,37 @@ export default function FireMap({ activeFires, prediction, onFireSelect, selecte
         )}
 
         {/* Highlight the currently selected fire origin */}
-        {selectedFire && (
+        {selectedFire && !isPredicting && (
           <Marker longitude={selectedFire.lon} latitude={selectedFire.lat} color="#ffffff" />
+        )}
+
+        {/* Scanning Animation loader while evaluating spread */}
+        {isPredicting && selectedFire && (
+          <Marker longitude={selectedFire.lon} latitude={selectedFire.lat}>
+            <div className="relative flex items-center justify-center">
+              <div className="absolute w-20 h-20 bg-[#BF00FF]/25 rounded-full animate-ping" />
+              <div className="absolute w-8 h-8 border border-[#BF00FF]/60 rounded-full animate-pulse" />
+              <div className="w-3 h-3 bg-[#BF00FF] rounded-full shadow-[0_0_12px_#BF00FF]" />
+            </div>
+          </Marker>
         )}
 
         <NavigationControl position="top-right" />
       </Map>
+
+      {/* Map Legend */}
+      <div className="absolute bottom-12 right-6 bg-[#1e1e1e]/85 backdrop-blur-md p-4 rounded-xl border border-white/10 shadow-lg pointer-events-none z-10 flex flex-col gap-3 hidden md:flex">
+        <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest leading-none">Legend</p>
+        <div className="flex items-center gap-2">
+          <div className="w-2.5 h-2.5 rounded-full bg-[#ff4444] shadow-[0_0_6px_rgba(255,68,68,0.6)]" />
+          <span className="text-xs text-zinc-300 font-medium">Active Fire Origin</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-2.5 h-2.5 rounded-full bg-[#ff9900]/80" />
+          <span className="text-xs text-zinc-300 font-medium">Predicted Spread (1-8 hrs)</span>
+        </div>
+      </div>
+
     </div>
   );
 }
