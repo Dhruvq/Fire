@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
-import Map, { Source, Layer, NavigationControl, Marker, MapMouseEvent } from 'react-map-gl/maplibre';
+import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
+import Map, { Source, Layer, NavigationControl, Marker, MapMouseEvent, MapRef } from 'react-map-gl/maplibre';
 import type { HeatmapLayerSpecification, CircleLayerSpecification } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 
@@ -35,6 +35,32 @@ export default function FireMap({ activeFires, prediction, onFireSelect, selecte
     pitch: 45, // Angled for 3D terrain
     bearing: 0
   });
+
+  const mapRef = useRef<MapRef>(null);
+
+  // Auto-zoom to the predicted footprint when the prediction returns
+  useEffect(() => {
+    if (prediction && prediction.predicted_footprint.length > 0 && mapRef.current) {
+      const lats = prediction.predicted_footprint.map(p => p.lat);
+      const lons = prediction.predicted_footprint.map(p => p.lon);
+      
+      const minLat = Math.min(...lats);
+      const maxLat = Math.max(...lats);
+      const minLon = Math.min(...lons);
+      const maxLon = Math.max(...lons);
+      
+      // fitBounds automatically calculates the best zoom level to fit the box
+      // We add padding-left: 350px to ensure the fire isn't hidden behind our Sidebar
+      mapRef.current.fitBounds(
+        [[minLon, minLat], [maxLon, maxLat]],
+        { 
+          padding: { top: 50, bottom: 50, right: 50, left: 100 },
+          maxZoom: 14,
+          duration: 1500 
+        }
+      );
+    }
+  }, [prediction]);
 
   // Convert raw fire points into GeoJSON for Mapbox
   const firesGeoJSON = useMemo(() => {
@@ -158,6 +184,7 @@ export default function FireMap({ activeFires, prediction, onFireSelect, selecte
   return (
     <div className="w-full h-full relative">
       <Map
+        ref={mapRef}
         {...viewState}
         onMove={(evt: any) => setViewState(evt.viewState)}
         mapStyle="https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json"
