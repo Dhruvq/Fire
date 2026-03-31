@@ -4,13 +4,12 @@ The **Wildfire Spread Forecaster** predicts where an active wildfire will spread
 
 ## App Screenshots
 
-<img src="./Landing_page.png" alt="Wildfire Spread Forecaster - Landing Page" width="65%" />  
+#### Initial view of the Wildfire Spread Forecaster landing page centered on Southern California:
+<img src="https://github.com/user-attachments/assets/f4f44639-e158-4dac-9e90-c98e772c66a8" alt="Wildfire Spread Forecaster - Landing Pa
+ge" width="70%" />  
 
-*Initial view of the Wildfire Spread Forecaster landing page centered on Southern California.*
-
-<img src="./Test_fire_6h_sim.png" alt="Wildfire Spread Forecaster - 6 Hour Simulation" width="65%" />
-
-*Example simulation predicting a fire's spread footprint over a 6-hour period.*
+#### Example simulation predicting a fire's spread footprint over a 6-hour period:
+<img src="https://github.com/user-attachments/assets/2a408c53-32ff-4e61-b18e-78e5d0480c77" alt="Wildfire Spread Forecaster - 6 Hour Simulation" width="70%" />
 
 
 ## Key Features
