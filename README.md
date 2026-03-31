@@ -40,47 +40,46 @@ The **Wildfire Spread Forecaster** predicts where an active wildfire will spread
 
 ## Getting Started
 
-To run the Wildfire Spread Forecaster locally, you will need to start both the Python FastApi backend and the Next.js frontend.
+The easiest way to run the Wildfire Spread Forecaster locally is using Docker Compose, which will automatically orchestrate both the Next.js frontend and FastAPI backend.
 
 ### Prerequisites
-- Node.js (for the frontend)
-- Python 3.8+ (for the backend)
+- Docker and Docker Compose installed on your system.
+- (Optional) Node.js 20+ and Python 3.10+ if you wish to run the services natively.
 
-### 1. Setting Up the Backend
+### 1. Running with Docker (Recommended)
 
-The backend is built with FastAPI and runs the cellular automata spread model.
+To start the entire application stack:
 
 ```bash
-# Navigate to the backend directory
-cd backend
+# From the root of the project, build and start the containers in the background:
+docker compose up --build -d
+```
 
-# Create and activate a virtual environment (if not already done)
-# This uses the venv directory at the root level of the project
+The application will now be accessible in your web browser at **http://localhost:3000**. The backend API documentation is available at **http://localhost:8000/docs**.
+
+To stop the application:
+```bash
+docker compose down
+```
+
+### 2. Manual Setup (Alternative)
+
+If you prefer to run the services natively without Docker:
+
+**Backend:**
+```bash
+cd backend
 python -m venv ../venv
 source ../venv/bin/activate  # On Windows, use `..\venv\Scripts\activate`
-
-# Install dependencies
-pip install -r requirements.txt # (Make sure you install the necessary packages)
-
-# Run the FastAPI server natively via Uvicorn
+pip install -r requirements.txt
 python -m uvicorn app:app --reload
 ```
+*Note: The backend defaults to port 8000. It supports an environment variable `USE_MOCK_FIRES="true"` to forcefully inject a mock fire cluster.*
 
-*Note: The backend defaults to port 8000. It supports an environment variable `USE_MOCK_FIRES="true"` to forcefully inject a mock fire cluster if the NASA FIRMS API returns no active fires in the region.*
-
-### 2. Setting Up the Frontend
-
-The frontend is a Next.js application that renders the Maplibre 3D interface.
-
+**Frontend:**
 ```bash
-# Open a new terminal and navigate to the frontend directory
 cd frontend
-
-# Install dependencies
-npm install
-
-# Run the Next.js development server
+npm install --legacy-peer-deps
 npm run dev
 ```
-
-The application should now be accessible in your web browser, typically at http://localhost:3000. It will automatically proxy API requests to the local backend.
+The frontend proxy will automatically route `/api/*` requests to the local backend.

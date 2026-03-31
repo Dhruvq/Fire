@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+    container_name: fire-backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend/.env:/app/.env
+    restart: unless-stopped
+    networks:
+      - fire-network
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: fire-frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend/.env.local:/app/.env.local
+    environment:
+      - BACKEND_URL=http://backend:8000
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - fire-network
+
+networks:
+  fire-network:
+    driver: bridge

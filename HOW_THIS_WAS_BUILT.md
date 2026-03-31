@@ -68,8 +68,21 @@ The Wildfire Spread Forecaster predicts where an active wildfire will spread in 
 ---
 *End of Phase 3.5.*
 
+## Phase 4: Containerization & Orchestration
+**Goal:** Dockerize the frontend and backend applications to ensure consistent, cross-platform local development and staging environments.
+
+*   **Setup:** Created `Dockerfile` configurations for both the Next.js frontend (Node 20 Alpine) and the FastAPI backend (Python 3.10 slim).
+*   **Orchestration:** Integrated a `docker-compose.yml` file to spin up both services at once, linking them via a local `fire-network` custom bridge.
+*   **Pivot - Next.js Rewrites & Docker:** 
+    *   *The Problem:* Next.js evaluates `next.config.ts` API proxy rewrites during the static build phase (`npm run build`). Without the `BACKEND_URL` environment variable present during the container build, the proxy defaulted to `http://127.0.0.1:8000`, failing network requests.
+    *   *Solution / Pivot:* We injected the Docker Compose network alias (`http://backend:8000`) as a Dockerfile `ARG` and `ENV` variable *before* the internal Next.js build step. This successfully hardcoded the rewrite destination to hit the backend container over the docker network.
+*   **Dependency Resolution Fix:** Updated the frontend Dockerfile to use `npm install --legacy-peer-deps` to bypass strict npm conflict errors between `react-map-gl` and the empty `mapbox-gl` NPM stub during automated builds.
+
+---
+*End of Phase 4.*
+
 ## Future Phases Planned
 
-**Phase 4: Cloud Infrastructure & Deployment**
-*   Deploy Backend to AWS Lambda or similar serverless architecture.
-*   Deploy Next.js frontend to AWS (e.g., AWS Amplify or S3/CloudFront) or Vercel.
+**Phase 5: Cloud Infrastructure & Deployment**
+*   Deploy Dockerized Backend to a managed container service (e.g., AWS ECS/Fargate or Google Cloud Run) or pivot back to Serverless AWS Lambda.
+*   Deploy Next.js frontend to AWS Amplify, Vercel, or as a standalone container.
