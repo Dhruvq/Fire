@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Play, Loader2, Info } from 'lucide-react';
+import { Play, Loader2, Info, Github } from 'lucide-react';
 import type { FirePoint, PredictionResult } from './FireMap';
 
 interface SidebarProps {
@@ -19,9 +19,21 @@ export default function Sidebar({ selectedFire, prediction, isPredicting, onPred
     <div className="absolute bottom-0 left-0 w-full md:bottom-auto md:w-80 md:top-4 md:left-4 bg-[#1e1e1e]/85 backdrop-blur-md rounded-t-2xl md:rounded-xl shadow-[0_-10px_40px_rgba(0,0,0,0.5)] md:shadow-lg overflow-hidden flex flex-col pointer-events-auto border-t md:border border-white/10 transition-all duration-300 z-50">
       
       {/* Header */}
-      <div className="bg-black/40 p-5 border-b border-white/5">
-        <h1 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">Wildfire Predictor</h1>
-        <p className="text-sm text-zinc-400 mt-1">Southern California</p>
+      <div className="bg-black/40 p-5 border-b border-white/5 flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">Wildfire Predictor</h1>
+          <p className="text-sm text-zinc-400 mt-1">Southern California</p>
+        </div>
+        <a 
+          href="https://github.com/Dhruvq/Fire" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-zinc-800/80 border border-zinc-700/50 text-zinc-300 hover:text-white hover:bg-zinc-700 hover:border-zinc-500 transition-all shadow-[0_0_10px_rgba(0,0,0,0.2)] active:scale-95 group"
+          title="View Source on GitHub"
+        >
+          <Github className="w-4 h-4 group-hover:drop-shadow-[0_0_5px_rgba(255,255,255,0.5)]" />
+          <span className="text-xs font-medium tracking-wide">GitHub</span>
+        </a>
       </div>
 
       <div className="p-5 flex flex-col gap-4 overflow-y-auto max-h-[45vh] md:max-h-[calc(100vh-8rem)] custom-scrollbar">
